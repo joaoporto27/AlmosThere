@@ -7,6 +7,8 @@ import CountryCard from "../../components/CountryCard";
 import CountryModal from "../../components/CountryModal";
 import Loading from "../../components/Loading";
 import styles from "./Countries.module.css";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const regions = [
   "africa",
@@ -16,7 +18,7 @@ const regions = [
   "europe",
   "oceania",
 ];
-const ITEMS_PER_PAGE = 10;
+const itensPage = 20;
 
 export default function Countries() {
   const [countries, setCountries] = useState([]);
@@ -33,6 +35,7 @@ export default function Countries() {
         : "https://restcountries.com/v3.1/all";
       const response = await axios.get(url);
       setCountries(response.data);
+      sessionStorage.setItem("countries", JSON.stringify(response.data));
       if (!region) {
         setAllCountries(response.data);
       }
@@ -49,19 +52,39 @@ export default function Countries() {
 
   const resetFilter = () => fetchCountries();
 
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const startIndex = (currentPage - 1) * itensPage;
+  const endIndex = startIndex + itensPage;
   const currentCountries = countries.slice(startIndex, endIndex);
+
+  const countryClick = (message) => {
+    toast.info(`Você clicou em: ${message}`, {
+      position: "bottom-left",
+      autoClose: 8000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "light",
+    });
+  };
 
   return (
     <div className={styles.container}>
+      <ToastContainer />
       <h1>Lista de Países do Mundo</h1>
       <div>
         {regions.map((region) => (
           <button
             key={region}
             className={styles.button}
-            onClick={() => fetchCountries(region)}
+            onClick={() => {
+              fetchCountries(region);
+              countryClick(
+                "Você clicou na região: " +
+                  region.charAt(0).toUpperCase() +
+                  region.slice(1)
+              );
+            }}
           >
             {region.charAt(0).toUpperCase() + region.slice(1)}
           </button>
@@ -89,7 +112,7 @@ export default function Countries() {
         <Pagination
           current={currentPage}
           total={countries.length}
-          pageSize={ITEMS_PER_PAGE}
+          pageSize={itensPage}
           onChange={(page) => setCurrentPage(page)}
           className={styles.pagination}
           showSizeChanger={false}
